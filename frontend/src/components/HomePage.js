@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { mockGoldPrices, mockCurrencies } from '../mock';
-import { TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, RefreshCw } from 'lucide-react';
+import { api } from '../services/api';
 
 const PriceCard = ({ item, language }) => {
   const name = language === 'tr' ? item.name : item.nameEn;
@@ -36,13 +36,38 @@ const HomePage = () => {
   const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('gold');
+  const [goldPrices, setGoldPrices] = useState([]);
+  const [currencies, setCurrencies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
-  const filteredGold = mockGoldPrices.filter(item => {
+  const fetchPrices = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getPrices();
+      if (data.gold) setGoldPrices(data.gold);
+      if (data.currency) setCurrencies(data.currency);
+      setLastUpdate(new Date(data.lastUpdate));
+    } catch (error) {
+      console.error('Failed to fetch prices:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPrices();
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filteredGold = goldPrices.filter(item => {
     const name = language === 'tr' ? item.name : item.nameEn;
     return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const filteredCurrencies = mockCurrencies.filter(item => {
+  const filteredCurrencies = currencies.filter(item => {
     const name = language === 'tr' ? item.name : item.nameEn;
     return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -60,6 +85,13 @@ const HomePage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           />
+          <button
+            onClick={fetchPrices}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={loading}
+          >
+            <RefreshCw size={16} className={`text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
@@ -89,37 +121,48 @@ const HomePage = () => {
 
       {/* Price List */}
       <div className="px-4">
-        {activeCategory === 'gold' && (
-          <div>
-            <h2 className="text-yellow-600 font-bold text-center mb-4 text-sm tracking-wide">
-              {t('goldPrices')}
-            </h2>
-            <div className="space-y-3">
-              {filteredGold.map((item) => (
-                <PriceCard key={item.id} item={item} language={language} />
-              ))}
-            </div>
+        {loading && goldPrices.length === 0 ? (
+          <div className="text-center py-12">
+            <RefreshCw size={32} className="mx-auto text-yellow-500 animate-spin mb-3" />
+            <p className="text-gray-500">Yükleniyor...</p>
           </div>
-        )}
+        ) : (
+          <>
+            {activeCategory === 'gold' && (
+              <div>
+                <h2 className="text-yellow-600 font-bold text-center mb-4 text-sm tracking-wide">
+                  {t('goldPrices')}
+                </h2>
+                <div className="space-y-3">
+                  {filteredGold.map((item) => (
+                    <PriceCard key={item.id} item={item} language={language} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {activeCategory === 'currency' && (
-          <div>
-            <h2 className="text-yellow-600 font-bold text-center mb-4 text-sm tracking-wide">
-              {t('currencyRates')}
-            </h2>
-            <div className="space-y-3">
-              {filteredCurrencies.map((item) => (
-                <PriceCard key={item.id} item={item} language={language} />
-              ))}
-            </div>
-          </div>
+            {activeCategory === 'currency' && (
+              <div>
+                <h2 className="text-yellow-600 font-bold text-center mb-4 text-sm tracking-wide">
+                  {t('currencyRates')}
+                </h2>
+                <div className="space-y-3">
+                  {filteredCurrencies.map((item) => (
+                    <PriceCard key={item.id} item={item} language={language} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Last Update Time */}
-      <div className="text-center mt-6 text-xs text-gray-500">
-        Son Güncelleme: {new Date().toLocaleString('tr-TR')}
-      </div>
+      {lastUpdate && (
+        <div className="text-center mt-6 text-xs text-gray-500">
+          Son Güncelleme: {lastUpdate.toLocaleString('tr-TR')}
+        </div>
+      )}
     </div>
   );
 };

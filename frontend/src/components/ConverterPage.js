@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { mockGoldPrices, mockCurrencies } from '../mock';
 import { ArrowRightLeft } from 'lucide-react';
+import { api } from '../services/api';
 
 const ConverterPage = () => {
   const { t, language } = useLanguage();
@@ -9,22 +9,49 @@ const ConverterPage = () => {
   const [fromItem, setFromItem] = useState('GRAM ALTIN');
   const [toItem, setToItem] = useState('TRY');
   const [result, setResult] = useState(null);
+  const [allItems, setAllItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const allItems = [
-    ...mockGoldPrices.map(item => ({
-      value: language === 'tr' ? item.name : item.nameEn,
-      label: language === 'tr' ? item.name : item.nameEn,
-      price: item.sell,
-      type: 'gold'
-    })),
-    ...mockCurrencies.map(item => ({
-      value: language === 'tr' ? item.name : item.nameEn,
-      label: language === 'tr' ? item.name : item.nameEn,
-      price: item.sell,
-      type: 'currency'
-    })),
-    { value: 'TRY', label: 'Türk Lirası (TRY)', price: 1, type: 'currency' }
-  ];
+  useEffect(() => {
+    const fetchPrices = async () => {
+      setLoading(true);
+      try {
+        const data = await api.getPrices();
+        const items = [];
+        
+        if (data.gold) {
+          data.gold.forEach(item => {
+            items.push({
+              value: language === 'tr' ? item.name : item.nameEn,
+              label: language === 'tr' ? item.name : item.nameEn,
+              price: item.sell,
+              type: 'gold'
+            });
+          });
+        }
+        
+        if (data.currency) {
+          data.currency.forEach(item => {
+            items.push({
+              value: language === 'tr' ? item.name : item.nameEn,
+              label: language === 'tr' ? item.name : item.nameEn,
+              price: item.sell,
+              type: 'currency'
+            });
+          });
+        }
+        
+        items.push({ value: 'TRY', label: 'Türk Lirası (TRY)', price: 1, type: 'currency' });
+        setAllItems(items);
+      } catch (error) {
+        console.error('Failed to fetch prices:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPrices();
+  }, [language]);
 
   const handleCalculate = () => {
     const fromPrice = allItems.find(item => item.value === fromItem)?.price || 1;
@@ -41,6 +68,14 @@ const ConverterPage = () => {
     setToItem(temp);
     setResult(null);
   };
+
+  if (loading) {
+    return (
+      <div className="pb-20 pt-6 px-4 text-center">
+        <p className="text-gray-500">Yükleniyor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20 pt-6 px-4">
