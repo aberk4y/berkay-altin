@@ -77,26 +77,39 @@ const PortfolioPage = () => {
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (newItem.name && newItem.quantity && newItem.buyPrice) {
-      const selectedItem = allItems.find(item => item.value === newItem.name);
-      const item = {
-        id: Date.now(),
-        type: newItem.type,
-        name: newItem.name,
-        nameEn: selectedItem?.nameEn || newItem.name,
-        quantity: parseFloat(newItem.quantity),
-        buyPrice: parseFloat(newItem.buyPrice),
-        currentPrice: selectedItem?.price || parseFloat(newItem.buyPrice)
-      };
-      setPortfolio([...portfolio, item]);
-      setNewItem({ type: 'gold', name: '', quantity: '', buyPrice: '' });
-      setIsDialogOpen(false);
+      try {
+        const selectedItem = allItems.find(item => item.value === newItem.name);
+        const itemData = {
+          type: newItem.type,
+          name: selectedItem?.nameTr || newItem.name,
+          nameEn: selectedItem?.nameEn || newItem.name,
+          quantity: parseFloat(newItem.quantity),
+          buyPrice: parseFloat(newItem.buyPrice)
+        };
+        
+        await api.createPortfolioItem(itemData);
+        await fetchPortfolio();
+        setNewItem({ type: 'gold', name: '', quantity: '', buyPrice: '' });
+        setIsDialogOpen(false);
+        toast({ title: 'Başarılı', description: 'Portföye eklendi' });
+      } catch (error) {
+        console.error('Failed to add item:', error);
+        toast({ title: 'Hata', description: 'Ürün eklenemedi', variant: 'destructive' });
+      }
     }
   };
 
-  const handleDeleteItem = (id) => {
-    setPortfolio(portfolio.filter(item => item.id !== id));
+  const handleDeleteItem = async (id) => {
+    try {
+      await api.deletePortfolioItem(id);
+      await fetchPortfolio();
+      toast({ title: 'Başarılı', description: 'Portföyden silindi' });
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      toast({ title: 'Hata', description: 'Ürün silinemedi', variant: 'destructive' });
+    }
   };
 
   const calculateProfit = (item) => {
