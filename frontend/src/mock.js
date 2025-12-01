@@ -42,7 +42,7 @@ export const mockAlerts = [
 
 export const translations = {
   tr: {
-    appName: 'Harem Altın',
+    appName: 'Berkay Altın',
     home: 'Ana Sayfa',
     converter: 'Çevirici',
     portfolio: 'Portföy',
