@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Home, Calculator, Briefcase, Bell } from 'lucide-react';
+import { Home, Calculator, Briefcase } from 'lucide-react';
 
 const BottomNav = ({ activeTab, setActiveTab }) => {
   const { t } = useLanguage();
@@ -8,8 +8,7 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: 'home', label: t('home'), icon: Home },
     { id: 'converter', label: t('converter'), icon: Calculator },
-    { id: 'portfolio', label: t('portfolio'), icon: Briefcase },
-    { id: 'alerts', label: t('alerts'), icon: Bell }
+    { id: 'portfolio', label: t('portfolio'), icon: Briefcase }
   ];
 
   return (
