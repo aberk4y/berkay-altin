@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { mockPortfolio, mockGoldPrices, mockCurrencies } from '../mock';
 import { Plus, TrendingUp, TrendingDown, Trash2, Briefcase } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { api } from '../services/api';
+import { toast } from '../hooks/use-toast';
 
 const PortfolioPage = () => {
   const { t, language } = useLanguage();
-  const [portfolio, setPortfolio] = useState(mockPortfolio);
+  const [portfolio, setPortfolio] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [allItems, setAllItems] = useState([]);
+  const [prices, setPrices] = useState({ gold: [], currency: [] });
   const [newItem, setNewItem] = useState({
     type: 'gold',
     name: '',
@@ -18,22 +22,60 @@ const PortfolioPage = () => {
     buyPrice: ''
   });
 
-  const allItems = [
-    ...mockGoldPrices.map(item => ({
-      value: language === 'tr' ? item.name : item.nameEn,
-      label: language === 'tr' ? item.name : item.nameEn,
-      price: item.sell,
-      type: 'gold',
-      nameEn: item.nameEn
-    })),
-    ...mockCurrencies.map(item => ({
-      value: language === 'tr' ? item.name : item.nameEn,
-      label: language === 'tr' ? item.name : item.nameEn,
-      price: item.sell,
-      type: 'currency',
-      nameEn: item.nameEn
-    }))
-  ];
+  useEffect(() => {
+    fetchPortfolio();
+    fetchPrices();
+  }, []);
+
+  const fetchPortfolio = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getPortfolio();
+      setPortfolio(data);
+    } catch (error) {
+      console.error('Failed to fetch portfolio:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPrices = async () => {
+    try {
+      const data = await api.getPrices();
+      setPrices(data);
+      
+      const items = [];
+      if (data.gold) {
+        data.gold.forEach(item => {
+          items.push({
+            value: language === 'tr' ? item.name : item.nameEn,
+            label: language === 'tr' ? item.name : item.nameEn,
+            price: item.sell,
+            type: 'gold',
+            nameEn: item.nameEn,
+            nameTr: item.name
+          });
+        });
+      }
+      
+      if (data.currency) {
+        data.currency.forEach(item => {
+          items.push({
+            value: language === 'tr' ? item.name : item.nameEn,
+            label: language === 'tr' ? item.name : item.nameEn,
+            price: item.sell,
+            type: 'currency',
+            nameEn: item.nameEn,
+            nameTr: item.name
+          });
+        });
+      }
+      
+      setAllItems(items);
+    } catch (error) {
+      console.error('Failed to fetch prices:', error);
+    }
+  };
 
   const handleAddItem = () => {
     if (newItem.name && newItem.quantity && newItem.buyPrice) {
