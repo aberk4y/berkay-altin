@@ -112,16 +112,35 @@ const PortfolioPage = () => {
     }
   };
 
-  const calculateProfit = (item) => {
-    const profit = (item.currentPrice - item.buyPrice) * item.quantity;
-    const percentage = ((item.currentPrice - item.buyPrice) / item.buyPrice) * 100;
-    return { profit, percentage };
+  const getCurrentPrice = (item) => {
+    const priceItem = allItems.find(p => 
+      (language === 'tr' ? p.nameTr === item.name : p.nameEn === item.nameEn)
+    );
+    return priceItem?.price || item.buyPrice;
   };
 
-  const totalValue = portfolio.reduce((sum, item) => sum + (item.currentPrice * item.quantity), 0);
+  const calculateProfit = (item) => {
+    const currentPrice = getCurrentPrice(item);
+    const profit = (currentPrice - item.buyPrice) * item.quantity;
+    const percentage = ((currentPrice - item.buyPrice) / item.buyPrice) * 100;
+    return { profit, percentage, currentPrice };
+  };
+
+  const totalValue = portfolio.reduce((sum, item) => {
+    const currentPrice = getCurrentPrice(item);
+    return sum + (currentPrice * item.quantity);
+  }, 0);
   const totalCost = portfolio.reduce((sum, item) => sum + (item.buyPrice * item.quantity), 0);
   const totalProfit = totalValue - totalCost;
   const totalPercentage = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+
+  if (loading) {
+    return (
+      <div className=\"pb-20 pt-6 px-4 text-center\">
+        <p className=\"text-gray-500\">Yükleniyor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-20 pt-6 px-4">
