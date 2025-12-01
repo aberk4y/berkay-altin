@@ -29,7 +29,7 @@ api_router = APIRouter(prefix="/api")
 # Root endpoint
 @api_router.get("/")
 async def root():
-    return {"message": "Harem Altın API"}
+    return {"message": "Berkay Altın API"}
 
 # Get Gold & Currency Prices
 @api_router.get("/prices")
