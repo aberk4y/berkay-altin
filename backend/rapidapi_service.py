@@ -11,8 +11,8 @@ RAPIDAPI_HOST = "gold-and-foreign-exchange-information-from-turkish-companies.p.
 class RapidAPIService:
     def __init__(self):
         self.headers = {
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
-            "X-RapidAPI-Host": RAPIDAPI_HOST
+            "x-rapidapi-key": RAPIDAPI_KEY,
+            "x-rapidapi-host": RAPIDAPI_HOST
         }
         self.base_url = f"https://{RAPIDAPI_HOST}"
     
