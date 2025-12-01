@@ -36,10 +36,19 @@ class HaremAPIService:
             logger.error(f"Error fetching Harem prices: {str(e)}")
             return self._get_fallback_data()
     
-    def _parse_turkish_number(self, value: str) -> float:
+    def _parse_turkish_number(self, value: str, is_percent: bool = False) -> float:
         """Parse Turkish formatted numbers (5.777,76 -> 5777.76)"""
         try:
-            # Remove thousands separator (.) and replace decimal comma (,) with dot
+            if not value or value == '':
+                return 0.0
+            
+            # For percentages, API uses dot as decimal separator
+            if is_percent:
+                # Percent values like "34.72" or "0.50" - already in correct format
+                return float(value)
+            
+            # For prices: Turkish format with dot as thousands separator and comma as decimal
+            # Example: "5.777,76" -> 5777.76
             cleaned = value.replace('.', '').replace(',', '.')
             return float(cleaned)
         except:
