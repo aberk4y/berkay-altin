@@ -6,6 +6,7 @@ import BottomNav from './components/BottomNav';
 import HomePage from './components/HomePage';
 import ConverterPage from './components/ConverterPage';
 import PortfolioPage from './components/PortfolioPage';
+import { Toaster } from './components/ui/toaster';
 
 function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -20,6 +21,7 @@ function App() {
           {activeTab === 'portfolio' && <PortfolioPage />}
         </main>
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Toaster />
       </div>
     </LanguageProvider>
   );
